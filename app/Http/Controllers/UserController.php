@@ -13,15 +13,9 @@ class UserController extends Controller
      */
     public function index()
     {
-        //
-    }
+        $user = User::all();
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
+        return $user;
     }
 
     /**
@@ -37,7 +31,7 @@ class UserController extends Controller
             'address' => 'required',
             'contact_no' => 'required',
             'email' => 'required|unique:users',
-            'password' => 'required'
+            'password' => 'required|min:5|confirmed'
         ]);
 
         if ($validator->fails()) {
@@ -74,15 +68,16 @@ class UserController extends Controller
      */
     public function show(string $id)
     {
-        //
-    }
+        $user = User::find($id);
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
+        if ($user) {
+            return $user;
+        } else {
+            return response()->json([
+                'success' => FALSE,
+                'message' => 'Error, id not found'
+            ], 401);
+        }
     }
 
     /**
@@ -90,7 +85,49 @@ class UserController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+        $data = $request->json()->all(); //Get the JSON object
+
+        $validator = Validator::make($data, [
+            'first_name' => 'required',
+            'last_name' => 'required',
+            'address' => 'required',
+            'contact_no' => 'required',
+            'password' => 'required|min:5|confirmed'
+        ]);
+
+        if ($validator->fails()) {
+            $errors = $validator->errors();
+            $arrErrors = [];
+
+            foreach ($errors->all() as $message) {
+                $arrErrors[] = $message;
+            }
+
+            return $arrErrors;
+        } else {
+            $user = User::find($id);
+
+            if ($user) {
+                $user->first_name = $data['first_name'];
+                $user->middle_name = $data['middle_name'];
+                $user->last_name = $data['last_name'];
+                $user->address = $data['address'];
+                $user->contact_no = $data['contact_no'];
+                $user->password = $data['password'];
+
+                $user->save();
+
+                return response()->json([
+                    'success' => TRUE,
+                    'message' => 'Successfully updated the user.'
+                ], 200);
+            } else {
+                return response()->json([
+                    'success' => FALSE,
+                    'message' => 'Error, id not found.'
+                ], 401);
+            }
+        }
     }
 
     /**
@@ -98,6 +135,59 @@ class UserController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        $user = User::find($id);
+
+        if ($user) {
+            $user->delete();
+
+            return response()->json([
+                'success' => TRUE,
+                'message' => 'Successfully deleted the user.'
+            ]);
+        } else {
+            return response()->json([
+                'success' => FALSE,
+                'message' => 'Error, id not found.'
+            ], 401);
+        }
+    }
+
+    //Update user email
+    public function updateEmail(Request $request, string $id)
+    {
+        $data = $request->json()->all();
+
+        $user = User::find($id);
+
+        if ($user) {
+            $validator = Validator::make($data, [
+                'email' => 'required|unique:users'
+            ]);
+
+            if ($validator->fails()) {
+                $errors = $validator->errors();
+                $arrErrors = [];
+
+                foreach ($errors->all() as $message) {
+                    $arrErrors[] = $message;
+                }
+
+                return $arrErrors;
+            } else {
+                $user->email = $data['email'];
+
+                $user->save();
+    
+                return response()->json([
+                    'success' => TRUE,
+                    'message' => 'Successfully updated the email.'
+                ]);
+            }
+        } else {    
+            return response()->json([
+                'success' => FALSE,
+                'message' => 'Error, id not found'
+            ]);
+        }
     }
 }

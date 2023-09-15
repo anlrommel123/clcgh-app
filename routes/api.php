@@ -13,3 +13,4 @@ use App\Http\Controllers\UserController;
 */
 
 Route::resource('/user', UserController::class);
+Route::put('/user/update_email/{id}', [UserController::class, 'updateEmail']);
